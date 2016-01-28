@@ -201,7 +201,7 @@
         if (this.tryMatch("=")) {
           this.match("=");
           var val = this.value();
-          return [key, val];
+          return [key.toLowerCase(), val];
         } else {
           throw "... = value expected, equals sign missing:" + this.input.substring(this.pos);
         }
