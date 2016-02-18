@@ -254,6 +254,10 @@
         this.comment = function () {
           this.debug.lastDirective = "comment";
           //this.matchAt();
+          /*          var tokens = this.matchToken(0, this.pos, "}");
+          console.log("#######");
+          console.log(JSON.stringify(tokens, null, '  '));
+          console.log("#######");*/
           this.single_value();
         };
 
@@ -261,6 +265,152 @@
           this.debug.lastDirective = "entry";
           this.entry_body(d);
         };
+
+      this.indent = function(level) {
+        var indent = "";
+        for (var i=0; i<level; i++) indent += "\t";
+        return indent;
+      };
+
+      this.matchText = function(startPos, token) {
+        var endPos = startPos;
+        var char = this.input[endPos++];
+
+        while (char !== token) {
+          char = this.input[endPos++];
+        }
+
+        return {
+          startPos: startPos,
+          endPos: endPos-1,
+          part: this.input.substring(startPos, endPos-1)
+        };
+      };
+
+
+      /**
+       * Beginning to do proper parsing
+       */
+
+      const COMMA = ",";
+      const L_BRACE = "{";
+      const R_BRACE = "}";
+      const HASH = "#";
+      const EQUAL = "=";
+      const D_QUOTE = "\"";
+
+      this.matchValue = function(pos) {
+        var startPos = pos;
+        var endPos = pos;
+        var char = this.input[endPos++];
+        var parts = [];
+
+        var part;
+        while (char !== COMMA) {
+          if (char === D_QUOTE) {
+            part = this.matchText(endPos, D_QUOTE);
+            parts.push({
+              type: "text",
+              delimiter: D_QUOTE,
+              content: part
+            });
+            endPos = part.endPos+1;
+            startPos = endPos;
+          } else if (char === L_BRACE) {
+            part = this.matchText(endPos, R_BRACE);
+            parts.push({
+              type: "text",
+              delimiter: L_BRACE,
+              content: part
+            });
+            endPos = part.endPos+1;
+            startPos = endPos;
+          } else if (char === HASH) {
+            // Need to encapsulate rule that concatenation is only legal with quotes,
+            // not curley brackets
+            startPos = endPos;
+          } else if (char === EQUAL) {
+            parts.push({
+              type: "error",
+              message: "Invalid token parsed, was looking for a comma [,] but found equals [=], your BibTeX most likely contains an error"
+            });
+            startPos = endPos;
+            break;
+          } else if (char === R_BRACE) {
+            // Last entry does not require comma termination
+            endPos--;
+            break;
+          }
+
+          char = this.input[endPos++];
+        }
+
+        if (startPos<endPos) {
+          part = this.input.substring(startPos, endPos-1);
+          if (part.trim().length > 0){
+            parts.push({
+              type: "error",
+              message: "Excpected no characters between the last string or text and the comma",
+              part: part
+            });
+          }
+        }
+
+        return {
+          startPos: pos,
+          endPos: endPos-1,
+          parts: parts
+        };
+      };
+
+      this.matchToken = function(l, pos, token) {
+        var startPos = pos;
+        var endPos = pos;
+        var char = this.input[endPos++];
+        var parts = [];
+
+        var part;
+        while (char !== token) {
+          if (char === D_QUOTE) {
+            part = this.matchToken(l+1, endPos, D_QUOTE);
+            parts.push(part);
+            endPos = part.endPos+1;
+            startPos = endPos;
+          } else if (char === L_BRACE) {
+            part = this.matchToken(l+1, endPos, R_BRACE);
+            parts.push(part);
+            endPos = part.endPos+1;
+            startPos = endPos;
+          } else if (char === COMMA) {
+            parts.push(this.input.substring(startPos, endPos-1));
+            startPos = endPos;
+          } else if (char === EQUAL) {
+            part = this.matchValue(endPos);
+            parts.push({
+              type: "entryTag",
+              key: this.input.substring(startPos, endPos-1).trim(),
+              value: part
+            });
+            endPos = part.endPos+1;
+            startPos = endPos;
+          }
+
+          char = this.input[endPos++];
+        }
+
+        if (startPos<endPos) {
+          part = this.input.substring(startPos, endPos-1);
+          if (part.trim().length > 0){
+            parts.push(this.input.substring(startPos, endPos-1));
+          }
+        }
+
+        return {
+          startPos: pos,
+          endPos: endPos-1,
+          parts: parts
+        };
+      };
 
       this.bibtex = function () {
         while (this.matchAt()) {
