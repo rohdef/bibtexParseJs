@@ -1,8 +1,10 @@
-/* start bibtexParse 0.0.2 */
+var banana = require("./banana.js");
+
+/* start bibtexParse 0.0.9 */
 
 // Original work by Henrik Muehe (c) 2010
-//
 // CommonJS port by Mikola Lysenko 2013
+// Parser rewrite by Rohde Fischer 2016
 //
 // Port to Browser lib by ORCID / RCPETERS
 //
@@ -42,7 +44,6 @@
         nov: "November",
         dec: "December"
       };
-      this.bibtexStrings = {};
 
       this.currentEntry = "";
 
@@ -50,12 +51,49 @@
         this.input = t;
       };
 
-      this.getEntries = function () {
-        return this.entries;
+      /* when search for a match  all text can be ignored, not just white space */
+      this.matchAt = function () {
+        while (this.input.length > this.pos && this.input[this.pos] != '@') {
+          this.pos++;
+        }
+
+        if (this.input[this.pos] == '@') {
+          return true;
+        }
+        return false;
       };
+
+
+      this.key_value_list = function () {
+        var kv = this.key_equals_value();
+        this.currentEntry['entryTags'] = {};
+        this.currentEntry['entryTags'][kv[0]] = kv[1];
+        while (this.tryMatch(",")) {
+          this.match(",");
+          // fixes problems with commas at the end of a list
+          if (this.tryMatch("}")) {
+            break;
+          }
+          kv = this.key_equals_value();
+          this.currentEntry['entryTags'][kv[0]] = kv[1];
+        }
+      };
+
 
       this.isWhitespace = function (s) {
         return (s == ' ' || s == '\r' || s == '\t' || s == '\n');
+      };
+
+      this.skipWhitespace = function () {
+        while (this.isWhitespace(this.input[this.pos])) {
+          this.pos++;
+        }
+        if (this.input[this.pos] === "%") {
+          while (this.input[this.pos] != "\n") {
+            this.pos++;
+          }
+          this.skipWhitespace();
+        }
       };
 
       this.match = function (s, length) {
@@ -65,120 +103,9 @@
         if (this.input.substring(this.pos, this.pos + length).match(s)) {
           this.pos += length;
         } else {
-          throw "Token mismatch, expected " + s + ", found " + this.input.substring(this.pos);
+          throw new Error("Token mismatch, expected " + s + ", found " + this.input.substring(this.pos, this.pos+1) + " at pos: " + this.pos);
         }
         this.skipWhitespace();
-      };
-
-        this.tryMatch = function (s) {
-            this.skipWhitespace();
-            if (this.input.substring(this.pos, this.pos + s.length).match(s)) {
-                return true;
-            } else {
-                return false;
-            }
-            this.skipWhitespace();
-        };
-
-        /* when search for a match  all text can be ignored, not just white space */
-      this.matchAt = function () {
-            while (this.input.length > this.pos && this.input[this.pos] != '@') {
-                this.pos++;
-            }
-
-            if (this.input[this.pos] == '@') {
-                return true;
-            }
-            return false;
-        };
-
-
-        this.skipWhitespace = function () {
-            while (this.isWhitespace(this.input[this.pos])) {
-                this.pos++;
-            }
-            if (this.input[this.pos] === "%") {
-                while (this.input[this.pos] != "\n") {
-                    this.pos++;
-                }
-                this.skipWhitespace();
-            }
-        };
-
-      this.value_braces = function () {
-        var bracecount = 0;
-        this.match("{");
-        var start = this.pos;
-        while (true) {
-          if (this.input[this.pos] == '}' && this.input[this.pos - 1] != '\\') {
-            if (bracecount > 0) {
-              bracecount--;
-            } else {
-              var end = this.pos;
-              this.match("}");
-              return this.input.substring(start, end);
-            }
-          } else if (this.input[this.pos] == '{') {
-            bracecount++;
-          } else if (this.pos == this.input.length - 1) {
-            throw "Unterminated value";
-          }
-          this.pos++;
-        }
-      };
-
-      this.value_quotes = function () {
-        this.match('"');
-        var start = this.pos;
-        while (true) {
-          if (this.input[this.pos] == '"' && this.input[this.pos - 1] != '\\') {
-            var end = this.pos;
-            this.match('"');
-            return this.input.substring(start, end);
-          } else if (this.pos == this.input.length - 1) {
-            throw "Unterminated value:" + this.input.substring(start);
-          }
-          this.pos++;
-        }
-      };
-
-      this.single_value = function () {
-        var start = this.pos;
-        if (this.tryMatch("{")) {
-          return this.value_braces();
-        } else if (this.tryMatch('"')) {
-          return this.value_quotes();
-        } else {
-          var k = this.key();
-
-          if (this.strings[k.toLowerCase()]) {
-            return this.strings[k];
-          } else if (k.match("^[0-9]+$")) {
-            return k;
-          } else if (k.match("^[?]$")) {
-            console.log("Found potential errornous '?'. The debug output is:");
-            console.log(JSON.stringify(this.debug, null, 2));
-            console.log();
-            return k;
-          } else if (k.match("^[.]+$")) {
-            console.log("Found potential errornous '" + k + "'. The debug output is:");
-            console.log(JSON.stringify(this.debug, null, 2));
-            console.log();
-            return k;
-          } else {
-            throw "Value expected at pos {" + this.pos + "}, debug info: {" + JSON.stringify(this.debug) + "}:" + this.input.substring(start);
-          }
-        }
-      };
-
-      this.value = function () {
-        var values = [];
-        values.push(this.single_value());
-        while (this.tryMatch("#")) {
-          this.match("#");
-          values.push(this.single_value());
-        }
-        return values.join("");
       };
 
       this.key = function () {
@@ -196,94 +123,85 @@
         }
       };
 
-      this.key_equals_value = function () {
-        var key = this.key();
-        if (this.tryMatch("=")) {
-          this.match("=");
-          var val = this.value();
-          return [key.toLowerCase(), val];
-        } else {
-          throw "... = value expected, equals sign missing:" + this.input.substring(this.pos);
-        }
-      };
-
-      this.key_value_list = function () {
-        var kv = this.key_equals_value();
-        this.currentEntry['entryTags'] = {};
-        this.currentEntry['entryTags'][kv[0]] = kv[1];
-        while (this.tryMatch(",")) {
-          this.match(",");
-          // fixes problems with commas at the end of a list
-          if (this.tryMatch("}")) {
-            break;
-          }
-          kv = this.key_equals_value();
-          this.currentEntry['entryTags'][kv[0]] = kv[1];
-        }
-      };
-
-      this.entry_body = function (d) {
-        this.currentEntry = {};
-        var citeKey = this.key();
-        this.debug.lastKey = citeKey;
-        this.currentEntry['citationKeyUnmodified'] = citeKey;
-        this.currentEntry['citationKey'] = citeKey.toLowerCase();
-        this.currentEntry['entryType'] = d.substring(1);
-        this.match(",");
-        this.key_value_list();
-        this.entries.push(this.currentEntry);
-      };
-
       this.directive = function () {
         this.match("@");
         return "@" + this.key();
       };
 
-        this.string = function () {
-          this.debug.lastDirective = "string";
-          var kv = this.key_equals_value();
-          this.strings[kv[0].toLowerCase()] = kv[1];
-          this.bibtexStrings[kv[0].toLowerCase()] = kv[1];
-        };
 
-        this.preamble = function () {
-          this.debug.lastDirective = "preamble";
-          this.value();
-        };
+      /**
+       * Entry parsers
+       */
+      this.entry = function (d) {
+        var content = this.matchToken(this.pos, R_BRACE);
+        var citeKey = null;
+        var entryTags = {};
 
-        this.comment = function () {
-          this.debug.lastDirective = "comment";
-          //this.matchAt();
-          /*          var tokens = this.matchToken(0, this.pos, "}");
-          console.log("#######");
-          console.log(JSON.stringify(tokens, null, '  '));
-          console.log("#######");*/
-          this.single_value();
-        };
+        for (var i=0; i<content.parts.length; i++) {
+          var part = content.parts[i];
 
-        this.entry = function (d) {
-          this.debug.lastDirective = "entry";
-          this.entry_body(d);
-        };
-
-      this.indent = function(level) {
-        var indent = "";
-        for (var i=0; i<level; i++) indent += "\t";
-        return indent;
-      };
-
-      this.matchText = function(startPos, token) {
-        var endPos = startPos;
-        var char = this.input[endPos++];
-
-        while (char !== token) {
-          char = this.input[endPos++];
+          if (part.type === KEY_TYPE) {
+            if (citeKey === null) {
+              citeKey = part.part;
+            } else {
+              // Todo handle this error, two cite keys is not possible
+              // secondly doesn't i have to be first by definition?
+            }
+          } else if (part.type === ENTRYTAG_TYPE) {
+            entryTags[part.key] = part.value.parts;
+          } else {
+            // Afaik this should not happen in an entry
+          }
         }
 
+        this.pos = content.endPos;
         return {
-          startPos: startPos,
-          endPos: endPos-1,
-          part: this.input.substring(startPos, endPos-1)
+          type: OTHER_ENTRY,
+          citationKeyUnmodified: citeKey,
+          citationKey: citeKey.toLowerCase(),
+          entryType: d.substring(1),
+          entryTags: entryTags
+        };
+      };
+
+      this.string = function () {
+        var strings = {};
+        var content = this.matchToken(this.pos, R_BRACE);
+
+        for (var i=0; i<content.parts.length; i++) {
+          var part = content.parts[i];
+
+          if (part.type === ENTRYTAG_TYPE) {
+            strings[part.key.toLowerCase()] = part.value;
+          } else {
+            // Todo handle error case
+          }
+        }
+
+        this.pos = content.endPos;
+        return {
+          type: STRING_ENTRY,
+          strings: strings
+        };
+      };
+
+      this.preamble = function () {
+        var startPos = this.pos;
+        var content = this.matchValue(this.pos);
+        this.pos = content.endPos;
+        return {
+          type: PREAMBLE_ENTRY,
+          preamble: content.parts
+        };
+      };
+
+      this.comment = function () {
+        var startPos = this.pos;
+        var content = this.matchPureToken(this.pos, R_BRACE);
+        this.pos = content.endPos;
+        return {
+          type: COMMENT_ENTRY,
+          comment: content
         };
       };
 
@@ -299,6 +217,44 @@
       const EQUAL = "=";
       const D_QUOTE = "\"";
 
+      const TEXT_TYPE = "text";
+      const STRING_TYPE = "string";
+      const ERROR_TYPE = "error";
+      const ENTRYTAG_TYPE = "entryTag";
+      const KEY_TYPE = "key";
+      const COMMENT_ENTRY = "comment";
+      const PREAMBLE_ENTRY = "preamble";
+      const STRING_ENTRY = "string";
+      const OTHER_ENTRY = "other";
+
+      /**
+       * Matches a text part of a value,
+       * delimited by either quotes or curly brackets
+       */
+      this.matchText = function(startPos, token) {
+        var endPos = startPos;
+        var char = this.input[endPos++];
+
+        while (char !== token) {
+          if (char === L_BRACE && token === R_BRACE) {
+            var text = this.matchText(endPos+1, R_BRACE);
+            endPos = text.endPos+1;
+          }
+
+          char = this.input[endPos++];
+        }
+
+        return {
+          startPos: startPos,
+          endPos: endPos-1,
+          part: this.input.substring(startPos, endPos-1)
+        };
+      };
+
+      /**
+       * Matches the value part of an entry tag,
+       * it is terminated with a comma or a right bracket
+       */
       this.matchValue = function(pos) {
         var startPos = pos;
         var endPos = pos;
@@ -310,7 +266,7 @@
           if (char === D_QUOTE) {
             part = this.matchText(endPos, D_QUOTE);
             parts.push({
-              type: "text",
+              type: TEXT_TYPE,
               delimiter: D_QUOTE,
               content: part
             });
@@ -319,19 +275,27 @@
           } else if (char === L_BRACE) {
             part = this.matchText(endPos, R_BRACE);
             parts.push({
-              type: "text",
+              type: TEXT_TYPE,
               delimiter: L_BRACE,
-              content: part
+              content: part.part
             });
             endPos = part.endPos+1;
             startPos = endPos;
           } else if (char === HASH) {
             // Need to encapsulate rule that concatenation is only legal with quotes,
             // not curley brackets
+            part = this.input.substring(startPos, endPos-1).trim();
+            if (part.length > 0) {
+              parts.push({
+                type: STRING_TYPE,
+                part: part
+              });
+            }
+
             startPos = endPos;
           } else if (char === EQUAL) {
             parts.push({
-              type: "error",
+              type: ERROR_TYPE,
               message: "Invalid token parsed, was looking for a comma [,] but found equals [=], your BibTeX most likely contains an error"
             });
             startPos = endPos;
@@ -347,9 +311,9 @@
 
         if (startPos<endPos) {
           part = this.input.substring(startPos, endPos-1);
-          if (part.trim().length > 0){
+          if (part.trim().length > 0) {
             parts.push({
-              type: "error",
+              type: ERROR_TYPE,
               message: "Excpected no characters between the last string or text and the comma",
               part: part
             });
@@ -363,7 +327,40 @@
         };
       };
 
-      this.matchToken = function(l, pos, token) {
+      /**
+       * Matches pure entries such as comments and preamples,
+       * where we do not care what the contents are, just what
+       * token to terminate with
+       */
+      this.matchPureToken = function(startPos, token) {
+        var endPos = startPos;
+        var char = this.input[endPos++];
+        var parts = [];
+
+        while (char !== token) {
+          if (char === L_BRACE && token === R_BRACE) {
+            var part = this.matchPureToken(endPos, R_BRACE);
+            endPos = part.endPos+1;
+          }
+
+          char = this.input[endPos++];
+        }
+
+        parts.push(this.input.substring(startPos, endPos-1));
+
+        return {
+          startPos: startPos,
+          endPos: endPos-1,
+          parts: parts
+        };
+      };
+
+      /**
+       * Matches normal BibTeX entries, such as an article,
+       * this should have a key and a given amount of entries
+       * for valid BibTeX.
+       */
+      this.matchToken = function(pos, token) {
         var startPos = pos;
         var endPos = pos;
         var char = this.input[endPos++];
@@ -372,22 +369,25 @@
         var part;
         while (char !== token) {
           if (char === D_QUOTE) {
-            part = this.matchToken(l+1, endPos, D_QUOTE);
+            part = this.matchToken(endPos, D_QUOTE);
             parts.push(part);
             endPos = part.endPos+1;
             startPos = endPos;
           } else if (char === L_BRACE) {
-            part = this.matchToken(l+1, endPos, R_BRACE);
+            part = this.matchToken(endPos, R_BRACE);
             parts.push(part);
             endPos = part.endPos+1;
             startPos = endPos;
           } else if (char === COMMA) {
-            parts.push(this.input.substring(startPos, endPos-1));
+            parts.push({
+              type: KEY_TYPE,
+              part: this.input.substring(startPos, endPos-1)
+            });
             startPos = endPos;
           } else if (char === EQUAL) {
             part = this.matchValue(endPos);
             parts.push({
-              type: "entryTag",
+              type: ENTRYTAG_TYPE,
               key: this.input.substring(startPos, endPos-1).trim(),
               value: part
             });
@@ -401,7 +401,10 @@
         if (startPos<endPos) {
           part = this.input.substring(startPos, endPos-1);
           if (part.trim().length > 0){
-            parts.push(this.input.substring(startPos, endPos-1));
+            parts.push({
+              type: KEY_TYPE,
+              part: this.input.substring(startPos, endPos-1)
+            });
           }
         }
 
@@ -413,32 +416,36 @@
       };
 
       this.bibtex = function () {
+        var parsing = {
+          comments: [],
+          strings: {},
+          entries: [],
+          preambles: []
+        };
         while (this.matchAt()) {
           var d = this.directive().toLowerCase();
           this.match("[{(]", 1);
-          if (d == "@string") {
-            this.string();
-          } else if (d == "@preamble") {
-            this.preamble();
-          } else if (d == "@comment") {
-            this.comment();
-          } else {
-            this.entry(d);
-          }
 
-          this.match("[})]", 1);
+          if (d == "@string") {
+            banana.mergeInto(this.string(), parsing.strings);
+          } else if (d == "@preamble") {
+            parsing.preambles.push(this.preamble());
+          } else if (d == "@comment") {
+            parsing.comments.push(this.comment());
+          } else {
+            parsing.entries.push(this.entry(d));
+          }
         }
+
+        return parsing;
       };
     }
 
     exports.toJSON = function (input) {
-        var b = new BibtexParser();
-        b.setInput(input);
-        b.bibtex();
-      return {
-        entries: b.entries,
-        strings: b.bibtexStrings
-      };
+      var b = new BibtexParser();
+      b.setInput(input);
+      var result = b.bibtex();
+      return result;
     };
 
 
