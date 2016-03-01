@@ -128,7 +128,7 @@ var banana = require("./banana.js");
               // secondly doesn't i have to be first by definition?
             }
           } else if (part.type === ENTRYTAG_TYPE) {
-            entryTags[part.key] = part.value.parts;
+            entryTags[part.key.toLowerCase()] = part.value.parts;
           } else {
             // Afaik this should not happen in an entry
           }
