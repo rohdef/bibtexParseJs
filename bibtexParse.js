@@ -248,7 +248,7 @@ var banana = require("./banana.js");
             parts.push({
               type: TEXT_TYPE,
               delimiter: D_QUOTE,
-              content: part
+              part: part.part
             });
             endPos = part.endPos+1;
             startPos = endPos;
@@ -257,7 +257,7 @@ var banana = require("./banana.js");
             parts.push({
               type: TEXT_TYPE,
               delimiter: L_BRACE,
-              content: part.part
+              part: part.part
             });
             endPos = part.endPos+1;
             startPos = endPos;
@@ -268,7 +268,7 @@ var banana = require("./banana.js");
             if (part.length > 0) {
               parts.push({
                 type: STRING_TYPE,
-                part: part
+                part: part.part
               });
             }
 
