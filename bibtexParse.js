@@ -10,8 +10,6 @@ var banana = require("./banana.js");
 //
 // Issues:
 //  no comment handling within strings
-//  no string concatenation
-//  no variable values yet
 // Grammar implemented here:
 //  bibtex -> (string | preamble | comment | entry)*;
 //  string -> '@STRING' '{' key_equals_value '}';
@@ -63,23 +61,6 @@ var banana = require("./banana.js");
         return false;
       };
 
-
-      this.key_value_list = function () {
-        var kv = this.key_equals_value();
-        this.currentEntry['entryTags'] = {};
-        this.currentEntry['entryTags'][kv[0]] = kv[1];
-        while (this.tryMatch(",")) {
-          this.match(",");
-          // fixes problems with commas at the end of a list
-          if (this.tryMatch("}")) {
-            break;
-          }
-          kv = this.key_equals_value();
-          this.currentEntry['entryTags'][kv[0]] = kv[1];
-        }
-      };
-
-
       this.isWhitespace = function (s) {
         return (s == ' ' || s == '\r' || s == '\t' || s == '\n');
       };
@@ -127,7 +108,6 @@ var banana = require("./banana.js");
         this.match("@");
         return "@" + this.key();
       };
-
 
       /**
        * Entry parsers
@@ -447,8 +427,4 @@ var banana = require("./banana.js");
       var result = b.bibtex();
       return result;
     };
-
-
 })(typeof exports === 'undefined' ? this['bibtexParse'] = {} : exports);
-
-/* end bibtexParse */
