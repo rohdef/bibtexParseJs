@@ -153,7 +153,7 @@ var banana = require("./banana.js");
 
           if (part.type === ENTRYTAG_TYPE) {
             var valuePart = "";
-            for (var j=0; j<part.value.parts; j++) {
+            for (var j=0; j<part.value.parts.length; j++) {
               var subPart = part.value.parts[j];
               if (subPart.type !== TEXT_TYPE) {
                 // Todo handle error
