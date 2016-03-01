@@ -152,7 +152,16 @@ var banana = require("./banana.js");
           var part = content.parts[i];
 
           if (part.type === ENTRYTAG_TYPE) {
-            strings[part.key.toLowerCase()] = part.value;
+            var valuePart = "";
+            for (var j=0; j<part.value.parts; j++) {
+              var subPart = part.value.parts[j];
+              if (subPart.type !== TEXT_TYPE) {
+                // Todo handle error
+              }
+              valuePart += subPart.part;
+            }
+
+            strings[part.key.toLowerCase()] = valuePart;
           } else {
             // Todo handle error case
           }
