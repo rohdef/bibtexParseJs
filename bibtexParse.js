@@ -416,7 +416,7 @@ var banana = require("./banana.js");
           this.match("[{(]", 1);
 
           if (d == "@string") {
-            banana.mergeInto(this.string(), parsing.strings);
+            banana.mergeInto(this.string().strings, parsing.strings);
           } else if (d == "@preamble") {
             parsing.preambles.push(this.preamble());
           } else if (d == "@comment") {
