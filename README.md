@@ -17,11 +17,12 @@ used inside the parser.  When testing for output please use these in
 case the text should change (it's likely to happen if ambiguity issues
 arise).
 
-```
-var bibtexParse = require("...");
-bibtexParse.types;
-/**
-the types contains:
+    var bibtexParse = require("...");
+    bibtexParse.types;
+
+    /**
+    the types contains:
+    
     TEXT_TYPE: marks a text part, such as the {Hovercraft} or "Eels" in a title
     STRING_TYPE: marks a string defined in a BibTeX string,
     ERROR_TYPE: marks an error, an object with the type ERROR_TYPE
@@ -36,8 +37,7 @@ the types contains:
     PREAMBLE_ENTRY: 
     STRING_ENTRY: 
     OTHER_ENTRY: 
-*/
-```
+    */
 
 ### Strings
 
@@ -98,7 +98,6 @@ console.log(sample);
 ## Credits
 (c) 2010 Henrik Muehe.  MIT License 
 [visit](https://code.google.com/p/bibtex-js/)
-
 
 CommonJS port maintained by Mikola Lysenko 
 [visit](https://github.com/mikolalysenko/bibtex-parser)
