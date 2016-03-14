@@ -416,7 +416,7 @@ var banana = require("./banana.js");
             nov: "November",
             dec: "December",
 
-            _toString: function(item, tail) {
+            toString: function(item, tail) {
               tail = tail || [];
 
               var text = "";
@@ -431,7 +431,7 @@ var banana = require("./banana.js");
                   }
 
                   if (this[item[i].part.toLowerCase()]) {
-                    text += this._toString(this[item[i].part.toLowerCase()], tail);
+                    text += this.toString(this[item[i].part.toLowerCase()], tail);
                   } else {
                     throw "Undefined string: [" + item[i].part  + "] was referenced";
                   }

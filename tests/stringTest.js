@@ -32,20 +32,20 @@ describe("When parsing strings it", function() {
     expect(bibtex.strings.dec).toBeDefined();
   });
 
-  it("should have a _toString that can print the textual representation of a string", function() {
+  it("should have a toString that can print the textual representation of a string", function() {
     var bibtex = parser.toJSON(bibtexData);
 
     expect(bibtex.strings).toBeDefined();
-    expect(bibtex.strings._toString).toBeDefined();
+    expect(bibtex.strings.toString).toBeDefined();
 
     var strings = bibtex.strings;
-    expect(typeof strings._toString).toEqual("function");
-    expect(strings._toString(strings.magritte))
+    expect(typeof strings.toString).toEqual("function");
+    expect(strings.toString(strings.magritte))
       .toEqual("Ceci n'est pas une pipe");
-    expect(strings._toString(strings.pratchett))
+    expect(strings.toString(strings.pratchett))
       .toEqual("Give a man a fire and he's warm for a day, "
                + "but set fire to him and he's warm for the rest of his life");
-    expect(strings._toString(strings.olivier))
+    expect(strings.toString(strings.olivier))
       .toEqual("'Ceci n'est pas une pipe' is a wonderful quote");
   });
 
@@ -100,33 +100,33 @@ describe("When parsing strings it", function() {
     expect(m3[0].part).toEqual("mar");
   });
 
-  it("should prevent cyclic references in _toString", function() {
+  it("should prevent cyclic references in toString", function() {
     var bibtex = parser.toJSON(bibtexData);
     var strings = bibtex.strings;
 
     expect(function() {
-      strings._toString(strings.cyclic1);
+      strings.toString(strings.cyclic1);
     }).toThrow("Cyclic call detected");
 
     expect(function() {
-      strings._toString(strings.cyclic2);
+      strings.toString(strings.cyclic2);
     }).toThrow("Cyclic call detected");
   });
 
-  it("should give errors when referencing undefined strings in _toString", function() {
+  it("should give errors when referencing undefined strings in toString", function() {
     var bibtex = parser.toJSON(bibtexData);
     var strings = bibtex.strings;
 
     expect(function() {
-      strings._toString(strings.badreference);
+      strings.toString(strings.badreference);
     }).toThrow("Undefined string: [nonexisting] was referenced");
   });
 
-  it("should take care of letter cases in _toString", function() {
+  it("should take care of letter cases in toString", function() {
     var bibtex = parser.toJSON(bibtexData);
     var strings = bibtex.strings;
 
-    expect(strings._toString(strings.camelcase)).toEqual("CaMeL cAsE");
-    expect(strings._toString(strings.hascamelcase)).toEqual("CaMeL cAsE");
+    expect(strings.toString(strings.camelcase)).toEqual("CaMeL cAsE");
+    expect(strings.toString(strings.hascamelcase)).toEqual("CaMeL cAsE");
   });
 });
