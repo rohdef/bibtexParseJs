@@ -307,6 +307,7 @@ var banana = require("./banana.js");
 
         if (startPos<endPos) {
           part = this.input.substring(startPos, endPos).trim();
+
           if (part.indexOf(" ") > -1) {
             parts.push({
               type: ERROR_TYPE,
@@ -315,7 +316,10 @@ var banana = require("./banana.js");
               part: part
             });
           } else if (part.length > 0) {
-            if (part !== ",") {
+            if (part.charAt(part.length-1) === ",") {
+              part = part.substring(0, part.length-1);
+            }
+            if (part.length > 0) {
               parts.push(this.getStringOrNumberType(part));
             }
           }
