@@ -44,12 +44,10 @@ the types contains:
 The strings are located in the returned object in the property named
 ```strings```.
 
-```
-var bibtexParse = require("...");
-var parsed = bibtexParse.toJSON('...');
+    var bibtexParse = require("...");
+    var parsed = bibtexParse.toJSON('...');
 
-console.log(parsed.strings);
-```
+    console.log(parsed.strings);
 
 All internal strings are converted to lowercase when put into the
 ```strings``` object.  All strings is an array consisting of the parts
@@ -57,25 +55,22 @@ that constitute that string.  A shortcut method ```toString(string)```
 is provided on the ```strings``` object, to parse it into a normal
 text string.  Thus:
 
-```
-var bibtexParse = require("...");
-var parsed = bibtexParse.toJSON('@STRING{someCamelCase = {Hello world}}\n' +
-                                '@STRING{someOtherCase = "Olivier says: " # someCamelCase}\n');
+    var bibtexParse = require("...");
+    var parsed = bibtexParse.toJSON('@STRING{someCamelCase = {Hello world}}\n' +
+                                    '@STRING{someOtherCase = "Olivier says: " # someCamelCase}\n');
 
-var strings = parsed.strings;
-/*
-This will contain:
-strings.somecamelcase = [{type: 'text', part: 'Hello world'}];
-strings.someothercase = [{type: 'text', part: 'Olivier says: '}, {type: 'string', part: 'someCamelCase'}]
+    var strings = parsed.strings;
+    /*
+    This will contain:
+    strings.somecamelcase = [{type: 'text', part: 'Hello world'}];
+    strings.someothercase = [{type: 'text', part: 'Olivier says: '}, {type: 'string', part: 'someCamelCase'}]
 
-the types should be tested against the types constant if checked, thus:
-bibtexParse.types.STRING_TYPE and bibtexParse.types.TEXT_TYPE
-*/
+    the types should be tested against the types constant if checked, thus:
+    bibtexParse.types.STRING_TYPE and bibtexParse.types.TEXT_TYPE
+    */
 
-console.log(strings.toString(strings.somecamelcase)); // prints: 'Hello world'
-console.log(strings.toString(strings.someothercase)); // prints: 'Olivier says: Hello world'
-
-```
+    console.log(strings.toString(strings.somecamelcase)); // prints: 'Hello world'
+    console.log(strings.toString(strings.someothercase)); // prints: 'Olivier says: Hello world'
 
 
 ## Using in Browser
