@@ -162,6 +162,7 @@ var banana = require("./banana.js");
                 valuePart.push(subPart);
               } else {
                 // Todo handle error
+                valuePart.push(subPart);
               }
             }
 
@@ -295,11 +296,17 @@ var banana = require("./banana.js");
         }
 
         if (startPos<endPos) {
-          part = this.input.substring(startPos, endPos-1);
-          if (part.trim().length > 0) {
+          part = this.input.substring(startPos, endPos-1).trim();
+          if (part.indexOf(" ") > -1) {
             parts.push({
               type: ERROR_TYPE,
-              message: "Excpected no characters between the last string or text and the comma",
+              message: "Expected no spaces between characters when looking for string, " +
+                "possibly missing concatenation, quotes or curly braces.",
+              part: part
+            });
+          } else if (part.length > 0) {
+            parts.push({
+              type: STRING_TYPE,
               part: part
             });
           }

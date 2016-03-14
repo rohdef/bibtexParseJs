@@ -74,4 +74,25 @@ describe("When parsing strings it", function() {
     expect(olivier[1].type).toEqual(parser.types.STRING_TYPE);
     expect(olivier[2].type).toEqual(parser.types.TEXT_TYPE);
   });
+
+  it("should handle content with only a string and strings at the edges", function() {
+    var bibtex = parser.toJSON(bibtexData);
+
+    var m1 = bibtex.strings.m1;
+    var m2 = bibtex.strings.m2;
+    var m3 = bibtex.strings.m3;
+    expect(m1).toBeDefined();
+    expect(m2).toBeDefined();
+    expect(m3).toBeDefined();
+
+    expect(m1.length).toBe(1);
+    expect(m2.length).toBe(2);
+    expect(m3.length).toBe(2);
+
+    expect(m1[0].type).toEqual(parser.types.STRING_TYPE);
+    expect(m2[0].type).toEqual(parser.types.TEXT_TYPE);
+    expect(m2[1].type).toEqual(parser.types.STRING_TYPE);
+    expect(m3[0].type).toEqual(parser.types.STRING_TYPE);
+    expect(m3[1].type).toEqual(parser.types.TEXT_TYPE);
+  });
 });
