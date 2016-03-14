@@ -297,7 +297,7 @@ var banana = require("./banana.js");
               part: part
             });
           } else if (part.length > 0) {
-            if (parts !== ",") {
+            if (part !== ",") {)
               parts.push({
                 type: STRING_TYPE,
                 part: part
