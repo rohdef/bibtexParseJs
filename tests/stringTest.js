@@ -32,10 +32,25 @@ describe("When parsing strings it", function() {
     expect(bibtex.strings.dec).toBeDefined();
   });
 
-  it("should give a map containing the strings and values", function() {
+  it("should have a _toString that can print the textual representation of a string", function() {
     var bibtex = parser.toJSON(bibtexData);
 
-    //console.log(bibtex);
+    expect(bibtex.strings).toBeDefined();
+    expect(bibtex.strings._toString).toBeDefined();
+
+    var strings = bibtex.strings;
+    expect(typeof strings._toString).toEqual("function");
+    expect(strings._toString(strings.magritte))
+      .toEqual("Ceci n'est pas une pipe");
+    expect(strings._toString(strings.pratchett))
+      .toEqual("Give a man a fire and he's warm for a day, "
+               + "but set fire to him and he's warm for the rest of his life");
+    expect(strings._toString(strings.olivier))
+      .toEqual("'Ceci n'est pas une pipe' is a wonderful quote");
+  });
+
+  it("should give a map containing the strings and values", function() {
+    var bibtex = parser.toJSON(bibtexData);
 
     expect(bibtex.strings).toBeDefined();
 
@@ -48,9 +63,15 @@ describe("When parsing strings it", function() {
 
     expect(magritte.length).toBe(1);
     expect(pratchett.length).toBe(2);
+    expect(olivier.length).toBe(3);
 
-    console.log(magritte);
-    console.log(pratchett);
-    console.log(olivier);
+    expect(magritte[0].type).toEqual(parser.types.TEXT_TYPE);
+
+    expect(pratchett[0].type).toEqual(parser.types.TEXT_TYPE);
+    expect(pratchett[1].type).toEqual(parser.types.TEXT_TYPE);
+
+    expect(olivier[0].type).toEqual(parser.types.TEXT_TYPE);
+    expect(olivier[1].type).toEqual(parser.types.STRING_TYPE);
+    expect(olivier[2].type).toEqual(parser.types.TEXT_TYPE);
   });
 });

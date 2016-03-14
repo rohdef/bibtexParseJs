@@ -22,6 +22,23 @@ var banana = require("./banana.js");
 //  value_quotes -> '"' .*? '"'; // not quite
 //  value_braces -> '{' .*? '"'; // not quite
 (function (exports) {
+  const COMMA = ",";
+  const L_BRACE = "{";
+  const R_BRACE = "}";
+  const HASH = "#";
+  const EQUAL = "=";
+  const D_QUOTE = "\"";
+
+  const TEXT_TYPE = "text";
+  const STRING_TYPE = "string";
+  const ERROR_TYPE = "error";
+  const ENTRYTAG_TYPE = "entryTag";
+  const KEY_TYPE = "key";
+  const COMMENT_ENTRY = "comment";
+  const PREAMBLE_ENTRY = "preamble";
+  const STRING_ENTRY = "string";
+  const OTHER_ENTRY = "other";
+
     function BibtexParser() {
       this.debug = {};
       this.pos = 0;
@@ -130,7 +147,7 @@ var banana = require("./banana.js");
         };
       };
 
-      this.string = function (stringsSoFar) {
+      this.string = function () {
         var strings = {};
         var content = this.matchToken(this.pos, R_BRACE);
 
@@ -138,19 +155,24 @@ var banana = require("./banana.js");
           var part = content.parts[i];
 
           if (part.type === ENTRYTAG_TYPE) {
-            var valuePart = "";
+            var valuePart = [];
             for (var j=0; j<part.value.parts.length; j++) {
               var subPart = part.value.parts[j];
-              if (subPart.type === TEXT_TYPE) {
-                valuePart += subPart.part;
-              } else if (subPart.type === STRING_TYPE) {
-                valuePart += stringsSoFar[subPart.part];
+              if (subPart.type === TEXT_TYPE || subPart.type === STRING_TYPE) {
+                valuePart.push(subPart);
               } else {
                 // Todo handle error
               }
-
             }
 
+            valuePart.toText = function() {
+              var text = "";
+              for (var k=0; k<this.length; k++) {
+                text += this[k].part;
+              }
+
+              return text;
+            };
             strings[part.key.toLowerCase()] = valuePart;
           } else {
             // Todo handle error case
@@ -188,23 +210,6 @@ var banana = require("./banana.js");
       /**
        * Beginning to do proper parsing
        */
-
-      const COMMA = ",";
-      const L_BRACE = "{";
-      const R_BRACE = "}";
-      const HASH = "#";
-      const EQUAL = "=";
-      const D_QUOTE = "\"";
-
-      const TEXT_TYPE = "text";
-      const STRING_TYPE = "string";
-      const ERROR_TYPE = "error";
-      const ENTRYTAG_TYPE = "entryTag";
-      const KEY_TYPE = "key";
-      const COMMENT_ENTRY = "comment";
-      const PREAMBLE_ENTRY = "preamble";
-      const STRING_ENTRY = "string";
-      const OTHER_ENTRY = "other";
 
       /**
        * Matches a text part of a value,
@@ -410,7 +415,19 @@ var banana = require("./banana.js");
             sep: "September",
             oct: "October",
             nov: "November",
-            dec: "December"
+            dec: "December",
+
+            _toString: function(item) {
+              var text = "";
+              for (var i=0; i<item.length; i++) {
+                if (item[i].type === TEXT_TYPE) {
+                  text += item[i].part;
+                } else if(item[i].type === STRING_TYPE) {
+                  text += this._toString(this[item[i].part]);
+                }
+              }
+              return text;
+            }
           },
           entries: [],
           preambles: []
@@ -420,7 +437,7 @@ var banana = require("./banana.js");
           this.match("[{(]", 1);
 
           if (d == "@string") {
-            banana.mergeInto(this.string(parsing.strings).strings, parsing.strings);
+            banana.mergeInto(this.string().strings, parsing.strings);
           } else if (d == "@preamble") {
             parsing.preambles.push(this.preamble());
           } else if (d == "@comment") {
@@ -433,6 +450,18 @@ var banana = require("./banana.js");
         return parsing;
       };
     }
+
+  exports.types = {
+    TEXT_TYPE: TEXT_TYPE,
+    STRING_TYPE: STRING_TYPE,
+    ERROR_TYPE: ERROR_TYPE,
+    ENTRYTAG_TYPE: ENTRYTAG_TYPE,
+    KEY_TYPE: KEY_TYPE,
+    COMMENT_ENTRY: COMMENT_ENTRY,
+    PREAMBLE_ENTRY: PREAMBLE_ENTRY,
+    STRING_ENTRY: STRING_ENTRY,
+    OTHER_ENTRY: OTHER_ENTRY
+  };
 
     exports.toJSON = function (input) {
       var b = new BibtexParser();
