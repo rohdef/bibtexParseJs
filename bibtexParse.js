@@ -30,6 +30,7 @@ var banana = require("./banana.js");
   const D_QUOTE = "\"";
 
   const TEXT_TYPE = "text";
+  const NUMBER_TYPE = "number";
   const STRING_TYPE = "string";
   const ERROR_TYPE = "error";
   const ENTRYTAG_TYPE = "entryTag";
@@ -229,6 +230,26 @@ var banana = require("./banana.js");
       };
 
       /**
+       * Decides if the part is a number or string and returns its corresponding entry
+       */
+      this.getStringOrNumberType = function(part) {
+        var type;
+
+        if (isNaN(part)) {
+          type = {
+            type: STRING_TYPE,
+            part: part
+          };
+        } else {
+          type = {
+            type: NUMBER_TYPE,
+            part: part
+          };
+        }
+        return type;
+      };
+
+      /**
        * Matches the value part of an entry tag,
        * it is terminated with a comma or a right bracket
        */
@@ -263,10 +284,7 @@ var banana = require("./banana.js");
             // not curley brackets
             part = this.input.substring(startPos, endPos-1).trim();
             if (part.length > 0) {
-              parts.push({
-                type: STRING_TYPE,
-                part: part
-              });
+              parts.push(this.getStringOrNumberType(part));
             }
 
             startPos = endPos;
@@ -298,10 +316,7 @@ var banana = require("./banana.js");
             });
           } else if (part.length > 0) {
             if (part !== ",") {
-              parts.push({
-                type: STRING_TYPE,
-                part: part
-              });
+              parts.push(this.getStringOrNumberType(part));
             }
           }
         }
@@ -423,7 +438,7 @@ var banana = require("./banana.js");
 
               var text = "";
               for (var i=0; i<item.length; i++) {
-                if (item[i].type === TEXT_TYPE) {
+                if (item[i].type === TEXT_TYPE || item[i].type === NUMBER_TYPE) {
                   text += item[i].part;
                 } else if(item[i].type === STRING_TYPE) {
                   if (tail.indexOf(item[i].part) > -1) {
@@ -466,6 +481,7 @@ var banana = require("./banana.js");
 
   exports.types = {
     TEXT_TYPE: TEXT_TYPE,
+    NUMBER_TYPE: NUMBER_TYPE,
     STRING_TYPE: STRING_TYPE,
     ERROR_TYPE: ERROR_TYPE,
     ENTRYTAG_TYPE: ENTRYTAG_TYPE,

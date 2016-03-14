@@ -129,4 +129,18 @@ describe("When parsing strings it", function() {
     expect(strings.toString(strings.camelcase)).toEqual("CaMeL cAsE");
     expect(strings.toString(strings.hascamelcase)).toEqual("CaMeL cAsE");
   });
+
+  it("should not mark numbers as strings but as numbers", function() {
+    var bibtex = parser.toJSON(bibtexData);
+    var strings = bibtex.strings;
+
+    expect(strings.number.length).toBe(1);
+    expect(strings.zero.length).toBe(1);
+
+    expect(strings.number[0].type).toEqual(parser.types.NUMBER_TYPE);
+    expect(strings.zero[0].type).toEqual(parser.types.NUMBER_TYPE);
+
+    expect(strings.toString(strings.number)).toEqual("12345");
+    expect(strings.toString(strings.zero)).toEqual("0");
+  });
 });
