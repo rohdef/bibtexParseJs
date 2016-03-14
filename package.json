@@ -9,12 +9,16 @@
   "dependencies": {
     "xml2js":"*"
   },
+  "devDependencies": {
+    "jasmine": "=2.4.0"
+  },
   "scripts": {
-    "test": "node test/runTest.js"
+    "test": "node runTests.js",
+    "old-test": "node oldTest/runTest.js"
   },
   "repository": {
     "type": "git",
-    "url": "https://github.com/ORCID/bibtexParseJs"
+    "url": "https://github.com/rohdef/bibtexParseJs"
   },
   "keywords": [
     "bibtex",
@@ -22,7 +26,7 @@
     "javascript",
     "parser"
   ],
-  "author": "rcpeters",
+  "author": "Rohde Fischer <rohdef@rohdef.dk> (http://rohdef.dk/) and rcpeters",
   "license": "MIT",
   "readmeFilename": "README.md",
   "bugs": {

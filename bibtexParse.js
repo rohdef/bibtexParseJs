@@ -28,20 +28,6 @@ var banana = require("./banana.js");
       this.input = "";
 
       this.entries = new Array();
-      this.strings = {
-        jan: "January",
-        feb: "February",
-        mar: "March",
-        apr: "April",
-        may: "May",
-        jun: "June",
-        jul: "July",
-        aug: "August",
-        sep: "September",
-        oct: "October",
-        nov: "November",
-        dec: "December"
-      };
 
       this.currentEntry = "";
 
@@ -144,7 +130,7 @@ var banana = require("./banana.js");
         };
       };
 
-      this.string = function () {
+      this.string = function (stringsSoFar) {
         var strings = {};
         var content = this.matchToken(this.pos, R_BRACE);
 
@@ -155,10 +141,14 @@ var banana = require("./banana.js");
             var valuePart = "";
             for (var j=0; j<part.value.parts.length; j++) {
               var subPart = part.value.parts[j];
-              if (subPart.type !== TEXT_TYPE) {
+              if (subPart.type === TEXT_TYPE) {
+                valuePart += subPart.part;
+              } else if (subPart.type === STRING_TYPE) {
+                valuePart += stringsSoFar[subPart.part];
+              } else {
                 // Todo handle error
               }
-              valuePart += subPart.part;
+
             }
 
             strings[part.key.toLowerCase()] = valuePart;
@@ -277,7 +267,7 @@ var banana = require("./banana.js");
             if (part.length > 0) {
               parts.push({
                 type: STRING_TYPE,
-                part: part.part
+                part: part
               });
             }
 
@@ -285,7 +275,8 @@ var banana = require("./banana.js");
           } else if (char === EQUAL) {
             parts.push({
               type: ERROR_TYPE,
-              message: "Invalid token parsed, was looking for a comma [,] but found equals [=], your BibTeX most likely contains an error"
+              message: "Invalid token parsed, was looking for a comma [,] " +
+                       "but found equals [=], your BibTeX most likely contains an error"
             });
             startPos = endPos;
             break;
@@ -407,7 +398,20 @@ var banana = require("./banana.js");
       this.bibtex = function () {
         var parsing = {
           comments: [],
-          strings: {},
+          strings: {
+            jan: "January",
+            feb: "February",
+            mar: "March",
+            apr: "April",
+            may: "May",
+            jun: "June",
+            jul: "July",
+            aug: "August",
+            sep: "September",
+            oct: "October",
+            nov: "November",
+            dec: "December"
+          },
           entries: [],
           preambles: []
         };
@@ -416,7 +420,7 @@ var banana = require("./banana.js");
           this.match("[{(]", 1);
 
           if (d == "@string") {
-            banana.mergeInto(this.string().strings, parsing.strings);
+            banana.mergeInto(this.string(parsing.strings).strings, parsing.strings);
           } else if (d == "@preamble") {
             parsing.preambles.push(this.preamble());
           } else if (d == "@comment") {
