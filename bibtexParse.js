@@ -166,14 +166,6 @@ var banana = require("./banana.js");
               }
             }
 
-            valuePart.toText = function() {
-              var text = "";
-              for (var k=0; k<this.length; k++) {
-                text += this[k].part;
-              }
-
-              return text;
-            };
             strings[part.key.toLowerCase()] = valuePart;
           } else {
             // Todo handle error case
@@ -296,7 +288,7 @@ var banana = require("./banana.js");
         }
 
         if (startPos<endPos) {
-          part = this.input.substring(startPos, endPos-1).trim();
+          part = this.input.substring(startPos, endPos).trim();
           if (part.indexOf(" ") > -1) {
             parts.push({
               type: ERROR_TYPE,
@@ -424,13 +416,21 @@ var banana = require("./banana.js");
             nov: "November",
             dec: "December",
 
-            _toString: function(item) {
+            _toString: function(item, tail) {
+              tail = tail || [];
+
               var text = "";
               for (var i=0; i<item.length; i++) {
                 if (item[i].type === TEXT_TYPE) {
                   text += item[i].part;
                 } else if(item[i].type === STRING_TYPE) {
-                  text += this._toString(this[item[i].part]);
+                  if (tail.indexOf(item[i].part) > -1) {
+                    throw "Cyclic call detected";
+                  } else {
+                    tail.push(item[i].part);
+                  }
+
+                  text += this._toString(this[item[i].part], tail);
                 }
               }
               return text;

@@ -94,5 +94,24 @@ describe("When parsing strings it", function() {
     expect(m2[1].type).toEqual(parser.types.STRING_TYPE);
     expect(m3[0].type).toEqual(parser.types.STRING_TYPE);
     expect(m3[1].type).toEqual(parser.types.TEXT_TYPE);
+
+    expect(m1[0].part).toEqual("jan");
+    expect(m2[1].part).toEqual("feb");
+    expect(m3[0].part).toEqual("mar");
   });
+
+  it("should prevent cyclic references in _toString", function() {
+    var bibtex = parser.toJSON(bibtexData);
+    var strings = bibtex.strings;
+
+    expect(function() {
+      strings._toString(strings.cyclic1);
+    }).toThrow("Cyclic call detected");
+
+    expect(function() {
+      strings._toString(strings.cyclic2);
+    }).toThrow("Cyclic call detected");
+  });
+
+  it("should give errors when referencing undefined strings");
 });
