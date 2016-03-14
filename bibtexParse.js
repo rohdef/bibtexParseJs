@@ -430,7 +430,11 @@ var banana = require("./banana.js");
                     tail.push(item[i].part);
                   }
 
-                  text += this._toString(this[item[i].part], tail);
+                  if (this[item[i].part.toLowerCase()]) {
+                    text += this._toString(this[item[i].part.toLowerCase()], tail);
+                  } else {
+                    throw "Undefined string: [" + item[i].part  + "] was referenced";
+                  }
                 }
               }
               return text;
