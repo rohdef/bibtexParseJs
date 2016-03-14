@@ -113,5 +113,20 @@ describe("When parsing strings it", function() {
     }).toThrow("Cyclic call detected");
   });
 
-  it("should give errors when referencing undefined strings");
+  it("should give errors when referencing undefined strings in _toString", function() {
+    var bibtex = parser.toJSON(bibtexData);
+    var strings = bibtex.strings;
+
+    expect(function() {
+      strings._toString(strings.badreference);
+    }).toThrow("Undefined string: [nonexisting] was referenced");
+  });
+
+  it("should take care of letter cases in _toString", function() {
+    var bibtex = parser.toJSON(bibtexData);
+    var strings = bibtex.strings;
+
+    expect(strings._toString(strings.camelcase)).toEqual("CaMeL cAsE");
+    expect(strings._toString(strings.hascamelcase)).toEqual("CaMeL cAsE");
+  });
 });
