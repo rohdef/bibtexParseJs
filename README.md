@@ -41,8 +41,7 @@ the types contains:
 
 ### Strings
 
-The strings are located in the returned object in the property named
-```strings```.
+The strings are located in the returned object:
 
     var bibtexParse = require("...");
     var parsed = bibtexParse.toJSON('...');
