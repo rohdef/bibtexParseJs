@@ -297,10 +297,12 @@ var banana = require("./banana.js");
               part: part
             });
           } else if (part.length > 0) {
-            parts.push({
-              type: STRING_TYPE,
-              part: part
-            });
+            if (parts !== ",") {
+              parts.push({
+                type: STRING_TYPE,
+                part: part
+              });
+            }
           }
         }
 
