@@ -215,7 +215,7 @@ var banana = require("./banana.js");
 
         while (char !== token) {
           if (char === L_BRACE && token === R_BRACE) {
-            var text = this.matchText(endPos+1, R_BRACE);
+            var text = this.matchText(endPos, R_BRACE);
             endPos = text.endPos+1;
           }
 
